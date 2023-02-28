@@ -1,0 +1,136 @@
+<html>
+
+<head>
+  <title>Three.js Model Loader</title>
+  <style>
+    body {
+      margin: 0;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+  <script src="js/three.min.js"></script>
+  <script src="js/OrbitControls.js"></script>
+  <script src="js/OBJLoader.js"></script>
+  <script src="js/MTLLoader.js"></script>
+  <script src="js/jQuery-2.1.4.min.js"></script>
+</head>
+
+<body>
+  <canvas style="display: none;" id="canvas"></canvas>
+  <script>
+
+    var mtlLoader = new THREE.MTLLoader()
+    var objLoader = new THREE.OBJLoader()
+
+    var scene = new THREE.Scene()
+    var camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000)
+    camera.position.set(0, 500, 500)
+
+    var renderer = new THREE.WebGLRenderer({ antialias: true })
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setClearColor(0xffffff, 1)   //设置背景颜色//0x00ff00：绿色
+    document.body.appendChild(renderer.domElement)
+
+    var lightAm = new THREE.AmbientLight('#8c4356', 1)  //设置模型颜色和光照的强度
+    scene.add(lightAm)
+
+    var lightDirect = new THREE.DirectionalLight(0xffffcc, 0.6)   //环境光的颜色和强度
+    lightDirect.position.set(50, 200, -50)
+    scene.add(lightDirect)
+
+    var axes = new THREE.AxisHelper(6);
+    scene.add(axes);
+
+    var controls = new THREE.OrbitControls(camera, renderer.domElement)
+
+    loadModel('obj/humvee/', 'bronchi', { x: -300, y: -300, z: 0 })
+    addText()  //添加文字
+    // addLine()  //添加直线
+    render()
+
+
+
+    function render() {
+      requestAnimationFrame(render)
+      renderer.render(scene, camera)
+    }
+    function loadModel(folder, name, position) {
+      // mtlLoader.setBaseUrl(folder)
+      // mtlLoader.setPath(folder)
+      objLoader.load(folder + name + '.obj', function (object) {
+        object.position.set(position.x, position.y, position.z)
+        object.rotateX(-Math.PI / 2)
+        scene.add(object)
+      })
+      // mtlLoader.load(name + '.mtl', function (materials) {
+      //   objLoader.setMaterials(materials)
+
+      // })
+    }
+    function addText() {
+      //用canvas生成图片
+      let canvas = document.getElementById('canvas')
+      let ctx = canvas.getContext('2d')
+      canvas.width = 300
+      canvas.height = 300
+      //制作矩形
+      ctx.fillStyle = "rgba(255,165,0,0.8)";
+      ctx.fillRect(0, 0, 300, 300)
+      //设置文字
+      ctx.fillStyle = "red";
+      ctx.font = 'normal 18pt "楷体"'
+      ctx.fillText('模型介绍', 100, 20)
+      let textWord = '这是一个肺结节模型'
+      //文字换行
+      let len = parseInt(textWord.length / 10)
+      for (let i = 0; i < (len + 1); i++) {
+        let space = 10
+        if (i === len) {
+          space = textWord.length - len * 10
+        }
+        console.log('len+' + len, 'space+' + space)
+        let word = textWord.substr(i * 10, space)
+        ctx.fillText(word, 15, 60 * (i + 1))
+      }
+      //生成图片
+      let url = canvas.toDataURL('image/png');
+
+      //将图片构建到纹理中
+      let geometry1 = new THREE.PlaneGeometry(160, 160)  //图片大小
+      let texture = THREE.ImageUtils.loadTexture(url, null, function (t) { })
+
+      let material1 = new THREE.MeshBasicMaterial({
+        map: texture,
+        side: THREE.DoubleSide,
+        opacity: 1,
+        transparent: true,
+      })
+
+      let rect = new THREE.Mesh(geometry1, material1)
+      rect.position.set(43, 40, 25)
+      scene.add(rect)
+    }
+    function addLine() {
+      const material = new THREE.LineBasicMaterial({
+        color: 0x0000ff
+      });
+
+      const points = [];
+      points.push(new THREE.Vector3(- 10, 0, 0));
+      points.push(new THREE.Vector3(0, 10, 0));
+      points.push(new THREE.Vector3(10, 0, 0));
+
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+      const line = new THREE.Line(geometry, material);
+      scene.add(line);
+
+    }
+  </script>
+</body>
+
+</html>
